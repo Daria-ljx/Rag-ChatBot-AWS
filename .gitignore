@@ -3,8 +3,9 @@ image/src/data/chroma/
 
 # 其他不需要上传的目录
 .venv/
-.idea/rm 
-venv/
+venv
+.idea/
 __pycache__/
 *.pyc
+
 .env
