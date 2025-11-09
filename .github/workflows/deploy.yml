@@ -1,4 +1,4 @@
-name: Build and Push Docker Image to AWS ECR
+name: Build, Push Docker to ECR and Deploy to ECS
 
 on:
   push:
@@ -6,15 +6,15 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Detection code
-      - name: Checkout code
+      # 1. Pull repository code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Configure AWS credentials
+      # 2. Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -22,27 +22,36 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # Login to ECR
+      # 3. Login to ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # Build Docker image
+      # 4. Build Docker image
       - name: Build Docker image
         run: |
           IMAGE_TAG=latest
           docker build -t rag-chatbot-aws:${IMAGE_TAG} ./image
 
-      # Tag image
+      # 5: Tag Docker image
       - name: Tag Docker image
         run: |
           ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG=latest
           docker tag rag-chatbot-aws:${IMAGE_TAG} $ECR_REGISTRY/rag-chatbot-aws:${IMAGE_TAG}
 
-      # Push image ECR
+      # 6: Push image to ECR
       - name: Push Docker image to ECR
         run: |
           ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG=latest
           docker push $ECR_REGISTRY/rag-chatbot-aws:${IMAGE_TAG}
+
+      # 7. Deploy to ECS
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          service: rag-chatbot-task-service
+          cluster: rag-chatbot-aws
+          wait-for-service-stability: true

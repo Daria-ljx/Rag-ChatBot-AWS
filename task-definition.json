@@ -1,0 +1,24 @@
+{
+  "family": "rag-chatbot-task",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "arn:aws:iam::835156586196:role/ecsTaskExecutionRole",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "rag-chatbot-container",
+      "image": "835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-aws:latest",
+      "portMappings": [
+        {
+          "containerPort": 8501,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        { "name": "ENV", "value": "production" }
+      ]
+    }
+  ]
+}
