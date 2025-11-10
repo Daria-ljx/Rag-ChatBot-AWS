@@ -53,5 +53,5 @@ jobs:
         with:
           task-definition: task-definition.json
           service: rag-chatbot-task-service
-          cluster: rag-chatbot-aws
+          cluster: rag-chatbot-cluster
           wait-for-service-stability: true

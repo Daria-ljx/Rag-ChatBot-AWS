@@ -15,10 +15,7 @@
           "protocol": "tcp"
         }
       ],
-      "essential": true,
-      "environment": [
-        { "name": "ENV", "value": "production" }
-      ]
+      "essential": true
     }
   ]
 }
