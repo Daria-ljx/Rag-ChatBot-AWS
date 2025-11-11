@@ -3,5 +3,5 @@
 .git
 __pycache__
 *.pyc
-data/chroma
+src/data/chroma
 .github/

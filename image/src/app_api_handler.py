@@ -4,9 +4,6 @@ from pydantic import BaseModel
 
 from src.query_model import QueryModel
 from src.rag_app.query_rag import query_rag
-# IDE
-# from query_model import QueryModel
-# from rag_app.query_rag import query_rag
 
 app = FastAPI()
 
