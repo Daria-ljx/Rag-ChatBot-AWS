@@ -2,8 +2,6 @@ from dataclasses import dataclass
 from typing import List
 from langchain.prompts import ChatPromptTemplate
 from langchain_aws import ChatBedrock
-# IDE
-# from rag_app.get_chroma_db import get_chroma_db
 from src.rag_app.get_chroma_db import get_chroma_db
 
 
@@ -31,49 +29,45 @@ def query_rag(query_text: str) -> QueryResponse:
     db = get_chroma_db()
     model = ChatBedrock(model_id=BEDROCK_MODEL_ID)
 
+    # Search the DB
     results = db.similarity_search_with_score(query_text, k=3)
 
-    if not results or len(results) == 0:
+    if not results:
+        # 没有找到文档，直接用LLM回答
         no_response = model.invoke(f"You are a helpful assistant. User said: {query_text}")
-        no_response_text = no_response.content
-        print(f"✅ Response: {no_response_text}")
-        return QueryResponse(query_text=query_text, response_text=no_response_text, sources=[])
+        print(f"✅ Response: (No RAG) {no_response.content}")
+        return QueryResponse(query_text=query_text, response_text=no_response.content, sources=[])
 
-    top_doc, top_score = results[0]
+    # 提取分数并计算平均分
+    scores = [score for _, score in results]
+    avg_score = sum(scores) / len(scores)
+    min_score = min(scores)
+    threshold = avg_score * 1.3  # 动态阈值
+    # min_absolute_threshold = 0.5  #embeddin
 
-    # Setting the threshold (the smaller the more similar)
-    threshold = 0.4
+    print(f"[DEBUG] Retrieved scores: {scores}, min_score: {min_score:.3f}, dynamic_threshold: {threshold:.3f}")
 
-    if top_score > threshold:
-        # Score is too high => User's question is not relevant to the documentation
-        no_rag_response = model.invoke(f"You are a helpful assistant. User said: {query_text}")
-        no_rag_response_text = no_rag_response.content
-        print(f"✅ Response: {no_rag_response_text}")
-        return QueryResponse(query_text=query_text, response_text=no_rag_response_text, sources=[])
+    # Chroma 距离越小越相似，所以 min_score < threshold 表示匹配度高
+    if min_score < threshold:
+        # 使用 RAG 上下文生成答案
+        context_text = "\n\n---\n\n".join([doc.page_content for doc, _ in results])
+        prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+        prompt = prompt_template.format(context=context_text, question=query_text)
+        print(prompt)
 
-    # Otherwise, RAG generation proceeds normally
-    context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
+        response = model.invoke(prompt)
+        response_text = response.content
+        sources = [doc.metadata.get("id", None) for doc, _ in results]
 
-    prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
-    prompt = prompt_template.format(context=context_text, question=query_text)
-    print(prompt)
-
-    model = ChatBedrock(model_id=BEDROCK_MODEL_ID)
-    response = model.invoke(prompt)
-    response_text = response.content
-
-    sources = [doc.metadata["id"] for doc, _score in results]
-
-    print(f"✅ Response: {response_text}")
-    print(f"✅ Sources: {sources}")
-
-    return QueryResponse(
-        query_text=query_text,
-        response_text=response_text,
-        sources=sources
-    )
+        print(f"✅ Response: {response_text}\n✅ Sources: {sources}")
+        return QueryResponse(query_text=query_text, response_text=response_text, sources=sources)
+    else:
+        # 匹配度低，直接用 LLM 回答
+        response = model.invoke(f"You are a helpful assistant. User said: {query_text}")
+        print(f"⚠️ Low similarity, skipping RAG. Response: {response.content}")
+        return QueryResponse(query_text=query_text, response_text=response.content, sources=[])
 
 
 if __name__ == "__main__":
-    query_rag("How can I contact Maybank?")
-    query_rag("Hi")
+    # query_rag("How much does a landing page cost to develop?")
+    query_rag("How can i contact Maybank?")

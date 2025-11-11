@@ -10,7 +10,7 @@ CHROMA_DB_INSTANCE = None
 
 
 def get_runtime_chroma_path():
-    base_path = "data/chroma"
+    base_path = "src/data/chroma"
     return os.path.abspath(base_path)
 
 
