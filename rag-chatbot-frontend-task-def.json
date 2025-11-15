@@ -1,0 +1,21 @@
+{
+  "family": "rag-frontend-task",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-frontend:latest",
+      "portMappings": [
+        { "containerPort": 8501, "hostPort": 8501, "protocol": "tcp" }
+      ],
+      "essential": true,
+      "environment": [
+        { "name": "AWS_DEFAULT_REGION", "value": "us-east-1" }
+      ]
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::835156586196:role/ecsTaskExecutionRole"
+}

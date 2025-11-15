@@ -1,0 +1,21 @@
+{
+  "family": "rag-backend-task",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-backend:latest",
+      "portMappings": [
+        { "containerPort": 8000, "hostPort": 8000, "protocol": "tcp" }
+      ],
+      "essential": true,
+      "environment": [
+        { "name": "AWS_DEFAULT_REGION", "value": "us-east-1" }
+      ]
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "3072",
+  "executionRoleArn": "arn:aws:iam::835156586196:role/ecsTaskExecutionRole"
+}

@@ -1,0 +1,90 @@
+name: CI/CD - Build & Deploy Frontend + Backend to ECS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Configure AWS credentials via GitHub Secrets
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # 3. Login to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # Use commit hash for tag
+      - name: Set IMAGE_TAG
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      ############################
+      # FRONTEND
+      ############################
+      - name: Build Frontend Docker image
+        run: docker build -t rag-chatbot-frontend:${IMAGE_TAG} ./frontend
+
+      - name: Tag Frontend Docker image
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          docker tag rag-chatbot-frontend:${IMAGE_TAG} $ECR_REGISTRY/rag-chatbot-frontend:${IMAGE_TAG}
+
+      - name: Push Frontend Docker image to ECR
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          docker push $ECR_REGISTRY/rag-chatbot-frontend:${IMAGE_TAG}
+
+      - name: Update Frontend Task Definition with new image
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          sed -i "s|835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-frontend:.*|$ECR_REGISTRY/rag-chatbot-frontend:${IMAGE_TAG}|g" rag-chatbot-frontend-task-def.json
+
+      - name: Deploy Frontend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: rag-chatbot-frontend-task-def.json
+          service: rag-chatbot-frontend-service
+          cluster: rag-chatbot-cluster
+          wait-for-service-stability: true
+
+      ############################
+      # BACKEND
+      ############################
+      - name: Build Backend Docker image
+        run: docker build -t rag-chatbot-backend:${IMAGE_TAG} ./backend
+
+      - name: Tag Backend Docker image
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          docker tag rag-chatbot-backend:${IMAGE_TAG} $ECR_REGISTRY/rag-chatbot-backend:${IMAGE_TAG}
+
+      - name: Push Backend Docker image to ECR
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          docker push $ECR_REGISTRY/rag-chatbot-backend:${IMAGE_TAG}
+
+      - name: Update Backend Task Definition with new image
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          sed -i "s|835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-backend:.*|$ECR_REGISTRY/rag-chatbot-backend:${IMAGE_TAG}|g" rag-chatbot-backend-task-def.json
+
+      - name: Deploy Backend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: rag-chatbot-backend-task-def.json
+          service: rag-chatbot-backend-service
+          cluster: rag-chatbot-cluster
+          wait-for-service-stability: true

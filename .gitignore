@@ -1,5 +1,5 @@
 # 忽略 Chroma 数据
-image/src/data/chroma/
+src/data/chroma/
 
 # 其他不需要上传的目录
 .venv/

@@ -1,7 +1,0 @@
-# 不打包这些文件
-.env
-.git
-__pycache__
-*.pyc
-src/data/chroma
-.github/

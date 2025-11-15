@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    container_name: backend_service
+    ports:
+      - "8000:8000"
+    networks:
+        - rag-net
+    environment:
+      - AWS_DEFAULT_REGION=us-east-1
+
+  frontend:
+    build: ./frontend
+    container_name: frontend_service
+    ports:
+      - "8501:8501"
+    environment:
+      FASTAPI_URL: "http://backend_service:8000"
+    depends_on:
+      - backend
+    networks:
+        - rag-net
+
+networks:
+  rag-net:
+    driver: bridge
