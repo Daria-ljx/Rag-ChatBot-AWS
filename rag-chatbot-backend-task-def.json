@@ -8,7 +8,7 @@
   "containerDefinitions": [
     {
       "name": "rag-chatbot-backend-container",
-      "image": "835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-backend",
+      "image": "835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-backend:PLACEHOLDER_TAG",
       "portMappings": [
         { "containerPort": 8000, "protocol": "tcp" }
       ],

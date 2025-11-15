@@ -12,9 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      ############################################
-      # AWS login configuration
-      ############################################
+      ###########################################
+      # AWS Login
+      ###########################################
       - uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -24,39 +24,63 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v1
         id: login-ecr
 
-      ############################################
-      # Set Image TAG: First 7 characters of Git commit
-      ############################################
+      ###########################################
+      # Set IMAGE TAG (前7位 commit hash)
+      ###########################################
       - run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      ############################################
+      ###########################################
       # Backend
-      ############################################
-      - name: Build Backend Image
+      ###########################################
+      - name: Build & Push Backend Image
         run: |
           docker build -t backend:${IMAGE_TAG} ./backend
           docker tag backend:${IMAGE_TAG} ${{ steps.login-ecr.outputs.registry }}/rag-chatbot-backend:${IMAGE_TAG}
           docker push ${{ steps.login-ecr.outputs.registry }}/rag-chatbot-backend:${IMAGE_TAG}
 
-      - name: Update Backend ECS Service
+      - name: Update Backend task definition
+        run: |
+          sed -i "s/PLACEHOLDER_TAG/${IMAGE_TAG}/g" rag-chatbot-backend-task-def.json
+
+      - name: Register Backend task definition
+        id: backend_task
+        run: |
+          aws ecs register-task-definition \
+            --cli-input-json file://rag-chatbot-backend-task-def.json \
+            --query "taskDefinition.taskDefinitionArn" \
+            --output text > task_backend_arn.txt
+
+      - name: Deploy Backend Service
         run: |
           aws ecs update-service \
             --cluster rag-chatbot-cluster \
             --service rag-chatbot-backend-service \
-            --force-new-deployment
+            --task-definition $(cat task_backend_arn.txt)
 
-      ############################################
+      ###########################################
       # Frontend
-      ############################################
-      - name: Build Frontend Image
+      ###########################################
+      - name: Build & Push Frontend Image
         run: |
           docker build -t frontend:${IMAGE_TAG} ./frontend
           docker tag frontend:${IMAGE_TAG} ${{ steps.login-ecr.outputs.registry }}/rag-chatbot-frontend:${IMAGE_TAG}
           docker push ${{ steps.login-ecr.outputs.registry }}/rag-chatbot-frontend:${IMAGE_TAG}
 
-      - name: Update Frontend ECS Service
+      - name: Update Frontend task definition
+        run: |
+          sed -i "s/PLACEHOLDER_TAG/${IMAGE_TAG}/g" rag-chatbot-frontend-task-def.json
+
+      - name: Register Frontend task definition
+        id: frontend_task
+        run: |
+          aws ecs register-task-definition \
+            --cli-input-json file://rag-chatbot-frontend-task-def.json \
+            --query "taskDefinition.taskDefinitionArn" \
+            --output text > task_frontend_arn.txt
+
+      - name: Deploy Frontend Service
         run: |
           aws ecs update-service \
             --cluster rag-chatbot-cluster \
             --service rag-chatbot-frontend-service \
-            --force-new-deployment
+            --task-definition $(cat task_frontend_arn.txt)
