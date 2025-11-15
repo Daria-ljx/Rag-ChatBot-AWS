@@ -1,5 +1,5 @@
 {
-  "family": "rag-backend-task",
+  "family": "rag-chatbot-backend-task-def",
   "networkMode": "awsvpc",
   "containerDefinitions": [
     {

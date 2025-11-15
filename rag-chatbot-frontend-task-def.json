@@ -1,5 +1,5 @@
 {
-  "family": "rag-frontend-task",
+  "family": "rag-chatbot-frontend-task-def",
   "networkMode": "awsvpc",
   "containerDefinitions": [
     {
@@ -16,6 +16,6 @@
   ],
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "1024",
-  "memory": "2048",
+  "memory": "3072",
   "executionRoleArn": "arn:aws:iam::835156586196:role/ecsTaskExecutionRole"
 }
