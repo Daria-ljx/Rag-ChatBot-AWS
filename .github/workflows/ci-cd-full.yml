@@ -7,17 +7,14 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_ACCOUNT: 835156586196
+  AWS_ACCOUNT_ID: 835156586196
   FRONTEND_REPO: rag-chatbot-frontend
   BACKEND_REPO: rag-chatbot-backend
   CLUSTER: rag-chatbot-cluster
   FRONTEND_SERVICE: rag-chatbot-frontend-service
   BACKEND_SERVICE: rag-chatbot-backend-service
-  FRONTEND_TASK: rag-chatbot-frontend-container
-  BACKEND_TASK: rag-chatbot-backend-container
-  BACKEND_IMAGE: 835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-backend
-  FRONTEND_IMAGE: 835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-frontend
-
+  FRONTEND_CONTAINER: rag-chatbot-frontend-container
+  BACKEND_CONTAINER: rag-chatbot-backend-container
 
 jobs:
   deploy:
@@ -33,46 +30,46 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }} #
+          aws-region: ${{ env.AWS_REGION }}
 
-        # 2. Login to Amazon ECR
+      # 2. Login to Amazon ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 3. Build and push backend image
-      - name: Build and push backend image
-        uses: aws-actions/amazon-ecr-build-push@v1
-        with:
-          repository: ${{ env.BACKEND_REPO }} #
-          image-tag: latest
-          context: ./backend #
-          dockerfile: ./backend/Dockerfile #
+      # 3. Build & Push backend image
+      - name: Build backend image
+        run: |
+          docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${BACKEND_REPO}:latest ./backend
 
-      # 4. Build and push frontend image
-      - name: Build and push frontend image
-        uses: aws-actions/amazon-ecr-build-push@v1
-        with:
-          repository: ${{ env.FRONTEND_REPO }} #
-          image-tag: latest
-          context: ./frontend
-          dockerfile: ./frontend/Dockerfile #
+      - name: Push backend image
+        run: |
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${BACKEND_REPO}:latest
+
+      # 4. Build & Push frontend image
+      - name: Build frontend image
+        run: |
+          docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:latest ./frontend
+
+      - name: Push frontend image
+        run: |
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:latest
 
       # 5. Deploy backend
       - name: Deploy backend
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: rag-chatbot-backend-task-def.json #
+          task-definition: rag-chatbot-backend-task-def.json
           cluster: ${{ env.CLUSTER }}
-          service: ${{ env.BACKEND_SERVICE}}
-          container-name: ${{ env.BACKEND_TASK }}
-          image: ${{ env.BACKEND_IMAGE }}:latest
+          service: ${{ env.BACKEND_SERVICE }}
+          container-name: ${{ env.BACKEND_CONTAINER }}
+          image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.BACKEND_REPO }}:latest
 
       # 6. Deploy frontend
       - name: Deploy frontend
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: rag-chatbot-frontend-task-def.json #
+          task-definition: rag-chatbot-frontend-task-def.json
           cluster: ${{ env.CLUSTER }}
-          service: ${{ env.FRONTEND_SERVICE}}
-          container-name: ${{ env.FRONTEND_TASK }}
-          image: ${{ env.FRONTEND_IMAGE }}:latest
+          service: ${{ env.FRONTEND_SERVICE }}
+          container-name: ${{ env.FRONTEND_CONTAINER }}
+          image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.FRONTEND_REPO }}:latest
