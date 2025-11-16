@@ -14,7 +14,8 @@
       ],
       "essential": true,
       "environment": [
-        { "name": "AWS_DEFAULT_REGION", "value": "us-east-1" }
+        { "name": "AWS_DEFAULT_REGION", "value": "us-east-1" },
+        { "name": "FASTAPI_URL", "value": "http://rag-chatbot-backend-service:8000" }
       ]
     }
   ]

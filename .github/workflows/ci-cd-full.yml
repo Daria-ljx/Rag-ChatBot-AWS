@@ -25,7 +25,7 @@ jobs:
         id: login-ecr
 
       ###########################################
-      # Set IMAGE TAG (前7位 commit hash)
+      # Set IMAGE TAG
       ###########################################
       - run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
@@ -38,15 +38,18 @@ jobs:
           docker tag backend:${IMAGE_TAG} ${{ steps.login-ecr.outputs.registry }}/rag-chatbot-backend:${IMAGE_TAG}
           docker push ${{ steps.login-ecr.outputs.registry }}/rag-chatbot-backend:${IMAGE_TAG}
 
+      # 每次构建前复制一个干净文件
+      - run: cp rag-chatbot-backend-task-def.json backend-task-temp.json
+
       - name: Update Backend task definition
         run: |
-          sed -i "s/PLACEHOLDER_TAG/${IMAGE_TAG}/g" rag-chatbot-backend-task-def.json
+          sed -i "s/PLACEHOLDER_TAG/${IMAGE_TAG}/g" backend-task-temp.json
 
       - name: Register Backend task definition
         id: backend_task
         run: |
           aws ecs register-task-definition \
-            --cli-input-json file://rag-chatbot-backend-task-def.json \
+            --cli-input-json file://backend-task-temp.json \
             --query "taskDefinition.taskDefinitionArn" \
             --output text > task_backend_arn.txt
 
@@ -66,15 +69,17 @@ jobs:
           docker tag frontend:${IMAGE_TAG} ${{ steps.login-ecr.outputs.registry }}/rag-chatbot-frontend:${IMAGE_TAG}
           docker push ${{ steps.login-ecr.outputs.registry }}/rag-chatbot-frontend:${IMAGE_TAG}
 
+      - run: cp rag-chatbot-frontend-task-def.json frontend-task-temp.json
+
       - name: Update Frontend task definition
         run: |
-          sed -i "s/PLACEHOLDER_TAG/${IMAGE_TAG}/g" rag-chatbot-frontend-task-def.json
+          sed -i "s/PLACEHOLDER_TAG/${IMAGE_TAG}/g" frontend-task-temp.json
 
       - name: Register Frontend task definition
         id: frontend_task
         run: |
           aws ecs register-task-definition \
-            --cli-input-json file://rag-chatbot-frontend-task-def.json \
+            --cli-input-json file://frontend-task-temp.json \
             --query "taskDefinition.taskDefinitionArn" \
             --output text > task_frontend_arn.txt
 
