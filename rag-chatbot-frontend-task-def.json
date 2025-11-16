@@ -1,22 +1,33 @@
 {
   "family": "rag-chatbot-frontend-task-def",
   "networkMode": "awsvpc",
-  "executionRoleArn": "arn:aws:iam::835156586196:role/ecsTaskExecutionRole",
   "requiresCompatibilities": ["FARGATE"],
-  "cpu": "1024",
-  "memory": "3072",
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::835156586196:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::835156586196:role/ecsTaskRole",
   "containerDefinitions": [
     {
       "name": "rag-chatbot-frontend-container",
-      "image": "835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-frontend:PLACEHOLDER_TAG",
-      "portMappings": [
-        { "containerPort": 8501, "protocol": "tcp" }
-      ],
+      "image": "835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-frontend",
+      "portMappings": [{"containerPort": 8501, "protocol": "tcp"}],
       "essential": true,
       "environment": [
-        { "name": "AWS_DEFAULT_REGION", "value": "us-east-1" },
-        { "name": "FASTAPI_URL", "value": "http://rag-chatbot-backend-service:8000" }
-      ]
+        {
+          "name": "FASTAPI_URL",
+          "value": "http://rag-chatbot-backend-service.rag-chatbot.ljx:8000"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/rag-chatbot-frontend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "cpu": 256,
+      "memory": 512
     }
   ]
 }

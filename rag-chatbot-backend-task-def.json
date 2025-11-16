@@ -1,21 +1,27 @@
 {
   "family": "rag-chatbot-backend-task-def",
   "networkMode": "awsvpc",
-  "executionRoleArn": "arn:aws:iam::835156586196:role/ecsTaskExecutionRole",
   "requiresCompatibilities": ["FARGATE"],
-  "cpu": "1024",
-  "memory": "3072",
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::835156586196:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::835156586196:role/ecsTaskRole",
   "containerDefinitions": [
     {
       "name": "rag-chatbot-backend-container",
-      "image": "835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-backend:PLACEHOLDER_TAG",
-      "portMappings": [
-        { "containerPort": 8000, "protocol": "tcp" }
-      ],
+      "image": "835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-backend",
+      "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
       "essential": true,
-      "environment": [
-        { "name": "AWS_DEFAULT_REGION", "value": "us-east-1" }
-      ]
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/rag-chatbot-backend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "cpu": 256,
+      "memory": 512
     }
   ]
 }
