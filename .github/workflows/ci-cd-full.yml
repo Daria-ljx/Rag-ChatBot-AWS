@@ -91,11 +91,11 @@ jobs:
       # =========================
       - name: Prepare backend task definition
         run: |
-          sed "s|REPLACE_ME_BACKEND|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${BACKEND_REPO}:${{ steps.version.outputs.tag }}|" backend.json > backend_rendered.json
+          sed "s|REPLACE_ME_BACKEND|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${BACKEND_REPO}:${{ steps.version.outputs.tag }}|" rag-chatbot-backend-task-def.json > backend_rendered.json
 
       - name: Prepare frontend task definition
         run: |
-          sed "s|REPLACE_ME_FRONTEND|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:${{ steps.version.outputs.tag }}|" frontend.json > frontend_rendered.json
+          sed "s|REPLACE_ME_FRONTEND|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:${{ steps.version.outputs.tag }}|" rag-chatbot-frontend-task-def.json > frontend_rendered.json
 
       # =========================
       #  6. Deploy backend
