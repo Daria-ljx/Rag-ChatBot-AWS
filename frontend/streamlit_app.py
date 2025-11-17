@@ -8,6 +8,7 @@ import logging
 # -------------------------------
 logging.basicConfig(
     level=logging.INFO,
+    stream=sys.stdout,
     format='%(asctime)s [%(levelname)s] %(message)s'
 )
 
@@ -56,6 +57,7 @@ if prompt := st.chat_input("Ask a question..."):
                     json={"query_text": prompt},
                     timeout=120
                 )
+                logging.info(f"Request sent to backend: {FASTAPI_URL}/submit_query")
                 if response.status_code == 200:
                     result = response.json()
                     answer = result.get("answer_text", "No answer returned.")
