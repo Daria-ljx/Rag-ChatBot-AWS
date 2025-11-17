@@ -23,10 +23,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # 必须要拿到 git tag
+          fetch-depth: 0  # must have this to fetch all tags
+          token: ${{ secrets.GH_PAT }}
 
       # =========================
-      #  1. 自动生成版本号 v1.0.1
+      #  1. Automatically generate version numbers v1.0.1
       # =========================
       - name: Generate version (semantic)
         id: version
@@ -46,7 +47,7 @@ jobs:
           echo "tag=$new_tag" >> $GITHUB_OUTPUT
 
       # =========================
-      #  2. 生成新 git tag
+      #  2. Generate new git tag
       # =========================
       - name: Create git tag
         run: |
@@ -54,7 +55,7 @@ jobs:
           git push origin ${{ steps.version.outputs.tag }}
 
       # =========================
-      #  3. Docker 登录 ECR
+      #  3. Docker Login ECR
       # =========================
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -86,7 +87,7 @@ jobs:
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:${{ steps.version.outputs.tag }}
 
       # =========================
-      #  5. 动态替换 task definition 镜像 tag
+      #  5. Dynamically replace task definition image tags
       # =========================
       - name: Prepare backend task definition
         run: |
