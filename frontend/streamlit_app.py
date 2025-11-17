@@ -4,7 +4,7 @@ import os
 import logging
 
 # -------------------------------
-# Logging 配置
+# Logging Configuration
 # -------------------------------
 logging.basicConfig(
     level=logging.INFO,
@@ -12,26 +12,26 @@ logging.basicConfig(
 )
 
 # -------------------------------
-# 后端 URL 配置
+# Backend URL Configuration
 # -------------------------------
-# 从环境变量获取 backend URL，如果没有则默认 localhost
+# Retrieve the backend URL from the environment variable; if absent, default to localhost.
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://localhost:8000")
 logging.info(f"Using backend URL: {FASTAPI_URL}")
 
 # -------------------------------
-# Streamlit 页面配置
+# Streamlit Page Configuration
 # -------------------------------
 st.set_page_config(page_title="RAG Chatbot", page_icon="💬", layout="centered")
 st.title("💬 RAG Chatbot")
 st.markdown("Chat with Lijiaxin RAG-powered knowledge base in real time.")
 
 # -------------------------------
-# 会话状态初始化
+# Session State Initialisation
 # -------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 显示聊天记录
+# Display chat history
 for msg in st.session_state.messages:
     role = msg["role"]
     content = msg["content"]
@@ -41,7 +41,7 @@ for msg in st.session_state.messages:
         st.chat_message("assistant").markdown(content)
 
 # -------------------------------
-# 用户输入处理
+# User input processing
 # -------------------------------
 if prompt := st.chat_input("Ask a question..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
