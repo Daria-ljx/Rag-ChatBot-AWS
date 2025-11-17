@@ -1,4 +1,4 @@
-name: CI/CD - Build & Deploy Backend + Frontend to ECS - Cloud Map
+name: CI/CD - Auto Version Build & Deploy
 
 on:
   push:
@@ -19,12 +19,43 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # 必须要拿到 git tag
 
-      # 1. Configure AWS credentials
+      # =========================
+      #  1. 自动生成版本号 v1.0.1
+      # =========================
+      - name: Generate version (semantic)
+        id: version
+        run: |
+          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          echo "Last tag: $last_tag"
+
+          major=$(echo $last_tag | cut -d. -f1 | tr -dc '0-9')
+          minor=$(echo $last_tag | cut -d. -f2)
+          patch=$(echo $last_tag | cut -d. -f3)
+
+          new_patch=$((patch + 1))
+          new_tag="v${major}.${minor}.${new_patch}"
+
+          echo "New version: $new_tag"
+
+          echo "tag=$new_tag" >> $GITHUB_OUTPUT
+
+      # =========================
+      #  2. 生成新 git tag
+      # =========================
+      - name: Create git tag
+        run: |
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin ${{ steps.version.outputs.tag }}
+
+      # =========================
+      #  3. Docker 登录 ECR
+      # =========================
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -32,44 +63,59 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 2. Login to Amazon ECR
-      - name: Login to Amazon ECR
+      - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 3. Build & Push backend image
+      # =========================
+      #  4. Build & Push Docker images
+      # =========================
       - name: Build backend image
         run: |
-          docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${BACKEND_REPO}:latest ./backend
+          docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${BACKEND_REPO}:${{ steps.version.outputs.tag }} ./backend
 
       - name: Push backend image
         run: |
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${BACKEND_REPO}:latest
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${BACKEND_REPO}:${{ steps.version.outputs.tag }}
 
-      # 4. Build & Push frontend image
       - name: Build frontend image
         run: |
-          docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:latest ./frontend
+          docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:${{ steps.version.outputs.tag }} ./frontend
 
       - name: Push frontend image
         run: |
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:latest
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:${{ steps.version.outputs.tag }}
 
-      # 5. Deploy backend
+      # =========================
+      #  5. 动态替换 task definition 镜像 tag
+      # =========================
+      - name: Prepare backend task definition
+        run: |
+          sed "s|REPLACE_ME_BACKEND|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${BACKEND_REPO}:${{ steps.version.outputs.tag }}|" backend.json > backend_rendered.json
+
+      - name: Prepare frontend task definition
+        run: |
+          sed "s|REPLACE_ME_FRONTEND|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:${{ steps.version.outputs.tag }}|" frontend.json > frontend_rendered.json
+
+      # =========================
+      #  6. Deploy backend
+      # =========================
       - name: Deploy backend
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: rag-chatbot-backend-task-def.json
+          task-definition: backend_rendered.json
           cluster: ${{ env.CLUSTER }}
           service: ${{ env.BACKEND_SERVICE }}
           container-name: ${{ env.BACKEND_CONTAINER }}
-          image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.BACKEND_REPO }}:latest
+          image: ""
 
-      # 6. Deploy frontend
+      # =========================
+      #  7. Deploy frontend
+      # =========================
       - name: Deploy frontend
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: rag-chatbot-frontend-task-def.json
+          task-definition: frontend_rendered.json
           cluster: ${{ env.CLUSTER }}
           service: ${{ env.FRONTEND_SERVICE }}
           container-name: ${{ env.FRONTEND_CONTAINER }}
-          image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.FRONTEND_REPO }}:latest
+          image: ""

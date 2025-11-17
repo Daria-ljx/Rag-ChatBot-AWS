@@ -9,13 +9,13 @@
   "containerDefinitions": [
     {
       "name": "rag-chatbot-frontend-container",
-      "image": "835156586196.dkr.ecr.us-east-1.amazonaws.com/rag-chatbot-frontend",
+      "image": "REPLACE_ME_FRONTEND",
       "portMappings": [{"containerPort": 8501, "protocol": "tcp"}],
       "essential": true,
       "environment": [
         {
           "name": "FASTAPI_URL",
-          "value": "http://rag-chatbot-backend-service.rag-chatbot.ljx:8000"
+          "value": "http://rag-chatbot-backend-alb-1448099526.us-east-1.elb.amazonaws.com"
         }
       ],
       "logConfiguration": {
