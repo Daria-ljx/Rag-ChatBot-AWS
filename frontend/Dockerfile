@@ -11,5 +11,5 @@ COPY . .
 
 EXPOSE 8501
 
-# 以 streamlit 启动前端应用
+# Launch the frontend application using Streamlit and output the logs.
 CMD ["streamlit", "run", "streamlit_app.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true", "--logger.level=debug"]
