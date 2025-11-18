@@ -15,13 +15,13 @@
       "environment": [
         {
           "name": "FASTAPI_URL",
-          "value": "http://rag-chatbot-backend-alb-1448099526.us-east-1.elb.amazonaws.com"
+          "value": "REPLACE_BACKEND_ALB"
         }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/rag-chatbot-frontend",
+          "awslogs-group": "/ecs/rag-chatbot-frontend-task-def",
           "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
         }
