@@ -27,32 +27,49 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       # =========================
-      #  1. Automatically generate version numbers v1.0.1
+      #  1. Automatically generate NON-DUPLICATE version
       # =========================
-      - name: Generate version (semantic)
+      - name: Generate version (semantic, no duplicates)
         id: version
         run: |
-          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
-          echo "Last tag: $last_tag"
+          # Get last tag (if none, fallback to v1.0.0)
+          last_tag=$(git tag --sort=-v:refname | head -n 1)
+          if [ -z "$last_tag" ]; then
+            last_tag="v1.0.0"
+          fi
+          echo "Last existing tag: $last_tag"
 
+          # Parse major, minor, patch
           major=$(echo $last_tag | cut -d. -f1 | tr -dc '0-9')
           minor=$(echo $last_tag | cut -d. -f2)
           patch=$(echo $last_tag | cut -d. -f3)
 
-          new_patch=$((patch + 1))
-          new_tag="v${major}.${minor}.${new_patch}"
+          # Try next patch, avoid duplicates
+          while true; do
+            patch=$((patch + 1))
+            new_tag="v${major}.${minor}.${patch}"
 
-          echo "New version: $new_tag"
+            if git rev-parse "refs/tags/$new_tag" >/dev/null 2>&1; then
+              echo "Tag $new_tag exists. Incrementing..."
+            else
+              echo "Selected new unique tag: $new_tag"
+              break
+            fi
+          done
 
           echo "tag=$new_tag" >> $GITHUB_OUTPUT
 
       # =========================
-      #  2. Generate new git tag
+      #  2. Create git tag (safe)
       # =========================
       - name: Create git tag
         run: |
-          git tag ${{ steps.version.outputs.tag }}
-          git push origin ${{ steps.version.outputs.tag }}
+          new_tag=${{ steps.version.outputs.tag }}
+          echo "Creating tag: $new_tag"
+
+          git tag "$new_tag"
+          git push origin "$new_tag"
+
 
       # =========================
       #  3. Docker Login ECR
