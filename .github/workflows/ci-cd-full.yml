@@ -96,6 +96,7 @@ jobs:
       - name: Prepare frontend task definition
         run: |
           sed "s|REPLACE_ME_FRONTEND|$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${FRONTEND_REPO}:${{ steps.version.outputs.tag }}|" rag-chatbot-frontend-task-def.json > frontend_rendered.json
+          sed "s|REPLACE_BACKEND_ALB|${{ secrets.FASTAPI_URL }}|" > frontend_rendered.json
 
       # =========================
       #  6. Deploy backend
