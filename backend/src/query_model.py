@@ -1,4 +1,6 @@
 from dataclasses import dataclass, asdict, field
+from datetime import datetime
+
 import boto3
 import uuid
 from typing import List, Optional
@@ -17,11 +19,10 @@ table = dynamodb.Table(TABLE_NAME)
 @dataclass
 class QueryModel:
     query_id: str = field(default_factory=lambda: uuid.uuid4().hex)
-    create_time: int = field(default_factory=lambda: int(time.time()))
+    create_time: int = lambda: int(datetime().now().strftime("%H%M%S%d%m%Y"))
     query_text: str = ""
     answer_text: Optional[str] = None
     sources: Optional[List[str]] = field(default_factory=list)
-    is_complete: bool = False
 
 
     # Storing the current object into DynamoDB

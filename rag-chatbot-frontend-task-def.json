@@ -5,7 +5,6 @@
   "cpu": "256",
   "memory": "512",
   "executionRoleArn": "arn:aws:iam::835156586196:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::835156586196:role/ecsTaskRole",
   "containerDefinitions": [
     {
       "name": "rag-chatbot-frontend-container",
@@ -15,7 +14,7 @@
       "environment": [
         {
           "name": "FASTAPI_URL",
-          "value": "REPLACE_BACKEND_ALB"
+          "value": "REPLACE_ALB"
         }
       ],
       "logConfiguration": {

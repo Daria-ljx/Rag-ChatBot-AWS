@@ -70,5 +70,5 @@ def query_rag(query_text: str) -> QueryResponse:
 
 
 if __name__ == "__main__":
-    # query_rag("How much does a landing page cost to develop?")
-    query_rag("How can i contact Maybank?")
+    query_rag("How much does a landing page cost to develop?")
+    # query_rag("How can i contact Maybank?")
