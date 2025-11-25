@@ -19,7 +19,7 @@ table = dynamodb.Table(TABLE_NAME)
 @dataclass
 class QueryModel:
     query_id: str = field(default_factory=lambda: uuid.uuid4().hex)
-    create_time: int = field(default_factory=lambda: int(datetime().now().strftime("%H%M%S%d%m%Y")))
+    create_time: int = field(default_factory=lambda: int(datetime.now().strftime("%H%M%S%d%m%Y")))
     query_text: str = ""
     answer_text: Optional[str] = None
     sources: Optional[List[str]] = field(default_factory=list)
