@@ -15,6 +15,11 @@ def index():
     return {"Hello": "World"}
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.get("/get_query")
 def get_query_endpoint(query_id: str) -> QueryModel:
     query = QueryModel.get_item(query_id)
