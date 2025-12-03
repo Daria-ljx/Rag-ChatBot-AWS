@@ -69,6 +69,13 @@ python -m src.app_api_handler
 
 Test : Enter http://127.0.0.1:8000/  will see the {"Hello":"World"}
 
+## Create .env in the root path
+```
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=us-east-1
+```
+
 ## Build the local image
 ```
 rag-chatbot-to-aws> docker-compose up -d --build
