@@ -14,5 +14,6 @@ RUN pip install pysqlite3-binary && \
 COPY . .
 
 # 从 .src 启动 FastAPI 应用
-CMD ["python", "-m", "src.app_api_handler"]
+CMD ["uvicorn", "src.app_api_handler:app", "--host", "0.0.0.0", "--port", "8000"]
+
 
