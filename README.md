@@ -1,4 +1,4 @@
-# 🚀 RAG Chatbot — Deploy to AWS (ECS + ALB + DynamoDB + ECR + S3)
+# 🚀 RAG Chatbot — Deploy to AWS (ECS + ALB + DynamoDB + ECR)
 
 ![Architecture Diagram](image/rag-chatbot-result.png)
 
@@ -9,7 +9,7 @@ This project provides a complete end-to-end pipeline for deploying a **RAG (Retr
 * ALB (Application Load Balancer)
 * Private subnets with NAT Gateway
 * DynamoDB for query logs
-* S3 for knowledge documents
+* Chroma for knowledge documents
 * ECR for Docker image storage
 * GitHub Actions CI/CD
 
@@ -25,6 +25,68 @@ This project provides a complete end-to-end pipeline for deploying a **RAG (Retr
 ├── rag-chatbot-frontend-task-def.json
 └── README.md
 ```
+
+---
+# Run in Local
+## Install Requirements
+Powershell: 
+```
+python -m venv venv
+venv/Scripts/activate
+cd backend
+pip install -r requirments.txt
+```
+
+## Building the Vector DB
+```
+backend> python -m populate_database
+```
+
+After finishing that, will show 
+
+```
+✅ All documents processed and added to Chroma DB.
+```
+
+## Run the App
+```
+python -m src.rag_app.query_rag
+```
+
+The response is:
+
+```
+Answer the question based on the above context: How much does a landing page cost to develop?
+
+✅ Response: According to the context provided, the cost of a landing page service offered by Galaxy Design Agency is $4,820.
+✅ Sources: ['D:\\PythonProject\\rag-chatbot-to-aws\\image\\src\\data\\source\\Samsung\\galaxy-design-client-guide.pdf:1:0', 'D:\\PythonProject\\rag-chatbot-to-aws\\backend\\src\\data\\source\\Samsung\\galaxy-design-client-guide.pdf:1:0', 'D:\\PythonProject\\rag-chatbot-to-aws\\image\\src\\data\\source\\Samsung\\galaxy-design-client-guide.pdf:7:0']
+```
+
+## Start FastAPI Server
+```
+python -m src.app_api_handler
+```
+
+Test : Enter http://127.0.0.1:8000/  will see the {"Hello":"World"}
+
+## Build the local image
+```
+rag-chatbot-to-aws> docker-compose up -d --build
+```
+
+Finish that will display:
+```
+[+] Running 4/4
+ ✔ rag-chatbot-to-aws-backend   Built                      0.0s
+ ✔ rag-chatbot-to-aws-frontend  Built                      0.0s
+ ✔ Container backend_service    Started                    5.2s
+ ✔ Container frontend_service   Started
+```
+
+## Open the frontend website
+http://localhost:8501
+
+Finish!
 
 ---
 
