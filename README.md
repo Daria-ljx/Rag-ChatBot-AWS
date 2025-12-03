@@ -1,5 +1,7 @@
 # 🚀 RAG Chatbot — Deploy to AWS (ECS + ALB + DynamoDB + ECR + S3)
 
+![Architecture Diagram](image/rag-chatbot-result.png)
+
 This project provides a complete end-to-end pipeline for deploying a **RAG (Retrieval-Augmented Generation) chatbot** to AWS, including:
 
 * Streamlit Frontend (Fargate / ECS)
@@ -221,7 +223,8 @@ Attributes stored:
 * `query_text`
 * `answer_text`
 * `sources`
-
+![Architecture Diagram](image/db.png)
+![Architecture Diagram](image/source.png)
 ---
 
 # 🧪 Health Check Endpoints
