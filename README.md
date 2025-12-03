@@ -174,17 +174,17 @@ rag-chatbot-backend
 ## ③ Create VPC, Elastic IP addresses and NAT Gateway. Verify Private Subnet's Route Table
 
 ### VPC:
-    | Resources to Create | Name              | AZs | Public Subnets | Private Subnets |
-    |---------------------|-------------------|-----|----------------|-----------------|
-    | VPC and Networking  | rag-chatbot-vpc   | 2   | 2              | 2               |
+| Resources to Create | Name            | AZs | Public Subnets | Private Subnets |
+|-------------------|-----------------|-----|----------------|----------------|
+| VPC and Networking | rag-chatbot-vpc | 2   | 2              | 2              |
 
 
 ### Route Table:
     Find the route table which is associated with the private subnets (2)
     Click **Routes** -> **Edit routes** -> **Add a new route**
-    | Destination | Target      |
-    |-------------|-------------|
-    | 0.0.0.0/0   | NAT gateway |
+| Destination | Target      |
+|-------------|-------------|
+| 0.0.0.0/0   | NAT gateway |
 
 
 ## ④ Create Security Group && Target Group
