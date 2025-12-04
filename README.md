@@ -1,17 +1,24 @@
-# 🚀 RAG Chatbot — Deploy to AWS (ECS + ALB + DynamoDB + ECR)
+# 🚀 RAG Chatbot — AWS Deployment (ECS + ALB + DynamoDB + CI/CD + ECR)
 
-![Architecture Diagram](image/rag-chatbot-result.png)
+![Architecture Overview](image/rag-chatbot-result.png)
 
-This project provides a complete end-to-end pipeline for deploying a **RAG (Retrieval-Augmented Generation) chatbot** to AWS, including:
+Source in document:
 
-* Streamlit Frontend (Fargate / ECS)
-* FastAPI Backend (Fargate / ECS)
-* ALB (Application Load Balancer)
-* Private subnets with NAT Gateway
-* DynamoDB for query logs
-* Chroma for knowledge documents
-* ECR for Docker image storage
-* GitHub Actions CI/CD
+![Architecture Diagram](image/source.png)
+
+Store in DynamoDB:
+![Architecture Diagram](image/db.png)
+
+This project provides a complete **end-to-end pipeline** for deploying a **RAG (Retrieval-Augmented Generation) chatbot** on AWS:
+
+- Streamlit Frontend (Fargate / ECS)
+- FastAPI Backend (Fargate / ECS)
+- ALB (Application Load Balancer)
+- Private subnets with NAT Gateway
+- DynamoDB for query logs
+- Chroma for knowledge documents
+- ECR for Docker image storage
+- GitHub Actions CI/CD
 
 ---
 
@@ -27,73 +34,45 @@ This project provides a complete end-to-end pipeline for deploying a **RAG (Retr
 ```
 
 ---
-# Run in Local
-## Install Requirements
-Powershell: 
-```
-python -m venv venv
-venv/Scripts/activate
-cd backend
-pip install -r requirments.txt
-```
 
-## Building the Vector DB
-```
-backend> python -m populate_database
-```
+## 💻 Local Setup
 
-After finishing that, will show 
+### 1. Create Virtual Environment & Install Dependencies
+```bash
+# Install Requirements
+  python -m venv venv
+  venv\Scripts\activate   # Windows
+  # source venv/bin/activate  # Linux/Mac
+  cd backend
+  pip install -r requirements.txt
 
-```
-✅ All documents processed and added to Chroma DB.
-```
 
-## Run the App
-```
-python -m src.rag_app.query_rag
-```
+# Building the Vector DB
+  backend> python -m populate_database
 
-The response is:
+  ( After finishing that, will show :  ✅ All documents processed and added to Chroma DB. )
 
-```
-Answer the question based on the above context: How much does a landing page cost to develop?
 
-✅ Response: According to the context provided, the cost of a landing page service offered by Galaxy Design Agency is $4,820.
-✅ Sources: ['D:\\PythonProject\\rag-chatbot-to-aws\\image\\src\\data\\source\\Samsung\\galaxy-design-client-guide.pdf:1:0', 'D:\\PythonProject\\rag-chatbot-to-aws\\backend\\src\\data\\source\\Samsung\\galaxy-design-client-guide.pdf:1:0', 'D:\\PythonProject\\rag-chatbot-to-aws\\image\\src\\data\\source\\Samsung\\galaxy-design-client-guide.pdf:7:0']
-```
+# Run the App
+  python -m src.rag_app.query_rag
 
-## Start FastAPI Server
-```
-python -m src.app_api_handler
-```
+  The response is:
+  Answer the question based on the above context: How much does a landing page cost to develop?
+  
+  ✅ Response: According to the context provided, the cost of a landing page service offered by Galaxy Design Agency is $4,820.
+  ✅ Sources: ['D:\\PythonProject\\rag-chatbot-to-aws\\image\\src\\data\\source\\Samsung\\galaxy-design-client-guide.pdf:1:0', 'D:\\PythonProject\\rag-chatbot-to-aws\\backend\\src\\data\\source\\Samsung\\galaxy-design-client-guide.pdf:1:0', 'D:\\PythonProject\\rag-chatbot-to-aws\\image\\src\\data\\source\\Samsung\\galaxy-design-client-guide.pdf:7:0']
 
-Test : Enter http://127.0.0.1:8000/  will see the {"Hello":"World"}
 
-## Create .env in the root path
-```
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_REGION=us-east-1
-```
+# Start FastAPI Server
+  python -m src.app_api_handler
+  
+  ( Visit: http://127.0.0.1:8000/ → should see {"Hello":"World"} )
 
-## Build the local image
-```
-rag-chatbot-to-aws> docker-compose up -d --build
-```
+# Optional: Docker Compose
+  docker-compose up -d --build
 
-Finish that will display:
+  (Frontend URL: http://localhost:8501)
 ```
-[+] Running 4/4
- ✔ rag-chatbot-to-aws-backend   Built                      0.0s
- ✔ rag-chatbot-to-aws-frontend  Built                      0.0s
- ✔ Container backend_service    Started                    5.2s
- ✔ Container frontend_service   Started
-```
-
-## Open the frontend website
-http://localhost:8501
-
-Finish!
 
 ---
 
@@ -132,8 +111,7 @@ Finish!
 
 Before deploying, ensure you have:
 
-* AWS Account
-* IAM user with required permissions
+* AWS Account & IAM user with required permissions
 * AWS CLI installed
 * GitHub repository with secrets configured:
 
@@ -149,101 +127,41 @@ Before deploying, ensure you have:
   * `FRONTEND_CONTAINER`
   * `BACKEND_CONTAINER`
   
-
 ---
 
 # 🏗️ Deployment Steps
 
 ## ① Create ECR in AWS
 
-```
-rag-chatbot-frontend
-rag-chatbot-backend
+* rag-chatbot-frontend, rag-chatbot-backend
 
-```
 
 ## ② Set Github Secrets
 
-```
-○ AWS_ACCESS_KEY_ID
-○ AWS_SECRET_ACCESS_KEY
-○ AWS_DEFAULT_REGION
-○ FASTAPI_URL --->http://<dns.name>
-```
+* AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION, FASTAPI_URL --->http://<dns.name>
 
-## ③ Create VPC, Elastic IP addresses and NAT Gateway. Verify Private Subnet's Route Table
+## ③ Create VPC & Subnets
 
-### VPC:
-| Resources to Create | Name            | AZs | Public Subnets | Private Subnets |
-|-------------------|-----------------|-----|----------------|----------------|
-| VPC and Networking | rag-chatbot-vpc | 2   | 2              | 2              |
+* Public + Private Subnets
+* Configure Route Table for NAT
 
+## ④ Security Group && Target Group
 
-### Route Table:
-    Find the route table which is associated with the private subnets (2)
-    Click **Routes** -> **Edit routes** -> **Add a new route**
-| Destination | Target      |
-|-------------|-------------|
-| 0.0.0.0/0   | NAT gateway |
-
-
-## ④ Create Security Group && Target Group
-
-| Security Group | VPC             | Inbound Rules                                 | Outbound Rules                         |
-|----------------|-----------------|----------------------------------------------|----------------------------------------|
-| **alb-sg**     | rag-chatbot-vpc | HTTP · TCP · 80 · **0.0.0.0/0**               | All traffic · All · All · 0.0.0.0/0    |
-| **backend-sg** | rag-chatbot-vpc | Custom TCP · TCP · **8000** · **alb-sg**      | All traffic · All · All · 0.0.0.0/0    |
-| **frontend-sg**| rag-chatbot-vpc | Custom TCP · TCP · **8501** · **alb-sg**      | All traffic · All · All · 0.0.0.0/0    |
-
-
-| Property       | backend-tg          | Property       | frontend-tg         |
-|----------------|---------------------|----------------|---------------------|
-| **name**       | backend-tg          | **name**       | frontend-tg         |
-| Target Type    | IP addresses        | Target Type    | IP addresses        |
-| Protocol       | HTTP                | Protocol       | HTTP                |
-| Port           | 8000                | Port           | 8501                |
-| Health Check   | /health             | Health Check   | /                   |
+* ALB: HTTP 80
+* Backend: TCP 8000
+* Frontend: TCP 8501
 
 ## ⑤ Create ALB
-### Create an Application Load Balancer (ALB)
-  1. Select Application Load Balancer
-  2. Set Scheme to Internet-facing
-  3. Set IP address type to IPv4
-  4. Choose your VPC (rag-chatbot-vpc)
-  5. Select the two Public Subnets under this VPC
-  6. Assign Security Group: alb-sg
-  7. Configure Listener:
-    * Protocol: HTTP
-    * Port: 80
-  8. Bind the Target Group: frontend-tg
 
-* **Frontend URL:** Public ALB DNS (Streamlit UI)
-* **Backend URL:** Internal load balancer or ECS service discovery
+* Internet-facing, assign security group
+* Listener rules: /api/* → backend, default → frontend
 
-Set this in the frontend environment:
+## ⑥ Deploy ECS Services
 
-```
-FASTAPI_URL="http://<backend-internal-url>"
-```
+* Create cluster, task definitions, and ECS services
+* Port mapping: frontend 8501, backend 8000
 
-### Configure Listener Rules
-  1. Click the newly created ALB
-  2. Go to Listeners and rules
-  3. Select the existing listener (HTTP:80)
-  4. Click Add rules
-
-
-| Conditions (Path)                                | Action      | Priority |
-|--------------------------------------------------|-------------|----------|
-| /api/* , /api/submit_query , /submit_query       | backend-tg  | 2        |
-| default                                          | frontend-tg | (default)|
-
-## ⑥ AWS ECS Auto Deploy New Image
-### create Cluster
-### create Task Definition
-frontend-task-def port mappings-container port : 8501
-backend-task-def port mappings-container port : 8000
-### create ECS Service (frontend + banckend)
+---
 
 # ⚙️ GitHub Actions Deployment
 
@@ -279,46 +197,23 @@ The CI/CD pipeline will automatically:
 
 Table Name: `rag`
 
-Partition Key:
+* Partition Key: `query_id (string)`
 
-```
-query_id (string)
-```
 
-Attributes stored:
+Attributes stored: `query_id`, `create_time`, `query_text`, `answer_text`, `sources`
 
-* `query_id`
-* `create_time`
-* `query_text`
-* `answer_text`
-* `sources`
-![Architecture Diagram](image/db.png)
-![Architecture Diagram](image/source.png)
 ---
 
 # 🧪 Health Check Endpoints
 
-### Backend
-
-```
-GET /health  → 200 OK
-```
-
-### Frontend
-
-```
-GET /  → 200 OK
-```
-
-Make sure ECS service health checks match these.
+* Backend: `GET /health  → 200 OK`
+* Frontend: `GET /  → 200 OK`
 
 ---
 
 # 🛑 Stopping the App (Avoid AWS Charges)
 
-To fully pause and avoid charges:
-
-### Required to stop charge:
+To avoid AWS charges:
 
 * Set **ECS Tasks = 0**
 * Delete **NAT Gateway**
@@ -336,7 +231,4 @@ To fully pause and avoid charges:
 * ECS task execution role missing:
 
   * `AmazonECSTaskExecutionRolePolicy`
-  * `ecsTaskRole` missing `AmazonBedrockFullAccess' and `AmazonDynamoDBFullAccess`
-
-
-If you need help adding **diagrams**, **CI/CD visualization**, or **Terraform IaC**, just let me know!
+  * `ecsTaskRole` missing `AmazonBedrockFullAccess` and `AmazonDynamoDBFullAccess`
